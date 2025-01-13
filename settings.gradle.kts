@@ -16,7 +16,7 @@ if (!file(".git").exists()) {
     error(errorText)
 }
 
-rootProject.name = "lukkit"
+rootProject.name = "Lukkit"
 
 for (name in listOf("lukkit-api", "lukkit-server")) {
     val projName = name.lowercase(Locale.ENGLISH)

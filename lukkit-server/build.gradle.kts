@@ -12,14 +12,12 @@ val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
 
 dependencies {
     mache("io.papermc:mache:1.21.4+build.7")
-    paperclip("io.papermc:paperclip:3.0.3")
+    paperclip("org.lukkitmc:lukkitclip:3.0.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 paperweight {
     minecraftVersion = providers.gradleProperty("mcVersion")
-    // macheOldPath = file("F:\\Projects\\PaperTooling\\mache\\versions\\1.21.4\\src\\main\\java")
-    // gitFilePatches = true
 
     paper {
         reobfMappingsPatch = layout.projectDirectory.file("../build-data/reobf-mappings-patch.tiny")
@@ -47,6 +45,7 @@ tasks.generateDevelopmentBundle {
     libraryRepositories.addAll(
         "https://repo.maven.apache.org/maven2/",
         paperMavenPublicUrl,
+        "http://110.42.44.163:8081/repository/releases"
     )
 }
 

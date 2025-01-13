@@ -1,15 +1,5 @@
-import io.papermc.paperweight.util.*
-import io.papermc.paperweight.util.constants.*
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import java.io.IOException
-import java.net.URI
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.SimpleFileVisitor
-import kotlin.io.path.*
-import java.nio.file.Path
-import kotlin.random.Random
 
 plugins {
     id("io.papermc.paperweight.core") version "2.0.0-beta.13" apply false
