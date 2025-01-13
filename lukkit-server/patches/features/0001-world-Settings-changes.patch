@@ -1,0 +1,166 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LukkitMC <lukkitmc@outlook.com>
+Date: Mon, 13 Jan 2025 13:34:29 +0800
+Subject: [PATCH] world Settings changes
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index b76ccbdc0b6f5f17b43f735295a2ec51100fbeef..5c140c6569790cac876c8cfffce85d82dcb8fbd6 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -270,6 +270,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+     private static final AtomicReference<RuntimeException> fatalException = new AtomicReference<>();
+     private final SuppressedExceptionCollector suppressedExceptions = new SuppressedExceptionCollector();
+     private final DiscontinuousFrame tickFrame;
++    private final org.lukkitmc.lukkit.LukkitConfig lukkitconfig = new org.lukkitmc.lukkit.LukkitConfig();
+ 
+     public static <S extends MinecraftServer> S spin(Function<Thread, S> threadFunction) {
+         AtomicReference<S> atomicReference = new AtomicReference<>();
+@@ -938,7 +939,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+ 
+             if (this.emptyTicks >= i) {
+                 if (this.emptyTicks == i) {
+-                    LOGGER.info("Server empty for {} seconds, pausing", this.pauseWhileEmptySeconds());
++                    //LOGGER.info("Server empty for {} seconds, pausing", this.pauseWhileEmptySeconds());
+                     this.autoSave();
+                 }
+ 
+@@ -1177,9 +1178,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+ 
+     @DontObfuscate
+     public String getServerModName() {
+-        return "vanilla";
++        return lukkitconfig.getservername();
+     }
+ 
++
+     public SystemReport fillSystemReport(SystemReport systemReport) {
+         systemReport.setDetail("Server Running", () -> Boolean.toString(this.running));
+         if (this.playerList != null) {
+diff --git a/net/minecraft/world/level/dimension/DimensionType.java b/net/minecraft/world/level/dimension/DimensionType.java
+index 218d82946f9cfe57f261e37de30c992998b6f9be..e7742fd045a5d4fab5c15347ba7b9f70fef6ca97 100644
+--- a/net/minecraft/world/level/dimension/DimensionType.java
++++ b/net/minecraft/world/level/dimension/DimensionType.java
+@@ -149,14 +149,17 @@ public record DimensionType(
+     }
+ 
+     public static Path getStorageFolder(ResourceKey<Level> dimensionKey, Path levelFolder) {
++        Path rootFolder = levelFolder.getParent();
+         if (dimensionKey == Level.OVERWORLD) {
+             return levelFolder;
+         } else if (dimensionKey == Level.END) {
+-            return levelFolder.resolve("DIM1");
++            return rootFolder.resolve("world_the_end");
++        } else if (dimensionKey == Level.NETHER) {
++            return rootFolder.resolve("world_nether");
+         } else {
+-            return dimensionKey == Level.NETHER
+-                ? levelFolder.resolve("DIM-1")
+-                : levelFolder.resolve("dimensions").resolve(dimensionKey.location().getNamespace()).resolve(dimensionKey.location().getPath());
++            return rootFolder.resolve("dimensions")
++                    .resolve(dimensionKey.location().getNamespace())
++                    .resolve(dimensionKey.location().getPath());
+         }
+     }
+ 
+diff --git a/org/lukkitmc/lukkit/LukkitBootstrap.java b/org/lukkitmc/lukkit/LukkitBootstrap.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..058a7bc3f1533ebec96994ffb06a0de3e8088da4
+--- /dev/null
++++ b/org/lukkitmc/lukkit/LukkitBootstrap.java
+@@ -0,0 +1,52 @@
++package org.lukkitmc.lukkit;
++
++import java.util.List;
++import joptsimple.OptionSet;
++import net.minecraft.SharedConstants;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++public final class LukkitBootstrap {
++    private static final Logger LOGGER = LoggerFactory.getLogger("bootstrap");
++    private static final org.lukkitmc.lukkit.LukkitConfig lukkitconfig = new org.lukkitmc.lukkit.LukkitConfig();
++
++    private LukkitBootstrap() {
++    }
++
++    public static void boot() {
++        SharedConstants.tryDetectVersion();
++
++        getStartupVersionMessages().forEach(LOGGER::info);
++
++        net.minecraft.server.Main.main(new String[0]);
++    }
++
++    private static List<String> getStartupVersionMessages() {
++        final String javaSpecVersion = System.getProperty("java.specification.version");
++        final String javaVmName = System.getProperty("java.vm.name");
++        final String javaVmVersion = System.getProperty("java.vm.version");
++        final String javaVendor = System.getProperty("java.vendor");
++        final String javaVendorVersion = System.getProperty("java.vendor.version");
++        final String osName = System.getProperty("os.name");
++        final String osVersion = System.getProperty("os.version");
++        final String osArch = System.getProperty("os.arch");
++
++        return List.of(
++                String.format(
++                        "Running Java %s (%s %s; %s %s) on %s %s (%s)",
++                        javaSpecVersion,
++                        javaVmName,
++                        javaVmVersion,
++                        javaVendor,
++                        javaVendorVersion,
++                        osName,
++                        osVersion,
++                        osArch
++                ),String.format(
++                        "%s Server , Version %s",
++                        lukkitconfig.getservername(),
++                        lukkitconfig.getserverversion()
++                )
++        );
++    }
++}
+diff --git a/org/lukkitmc/lukkit/LukkitConfig.java b/org/lukkitmc/lukkit/LukkitConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..d48d5af120d78d96074999733dd5a2e6b512e1f1
+--- /dev/null
++++ b/org/lukkitmc/lukkit/LukkitConfig.java
+@@ -0,0 +1,14 @@
++package org.lukkitmc.lukkit;
++
++public class LukkitConfig implements Lukkit {
++    public String servername = "Lukkit";
++    public String serverversion = "1.21.4";
++    @Override
++    public String getservername() {
++        return servername;
++    }
++    @Override
++    public String getserverversion() {
++        return serverversion;
++    }
++}
+diff --git a/org/lukkitmc/lukkit/LukkitServer.java b/org/lukkitmc/lukkit/LukkitServer.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fe37a8b888b418be95ee79310757db7ae43c9a53
+--- /dev/null
++++ b/org/lukkitmc/lukkit/LukkitServer.java
+@@ -0,0 +1,4 @@
++package org.lukkitmc.lukkit;
++
++public class LukkitServer {
++}
+diff --git a/org/lukkitmc/lukkit/Main.java b/org/lukkitmc/lukkit/Main.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f10c26c6f17c92d6f091c367d253fea9efd2c665
+--- /dev/null
++++ b/org/lukkitmc/lukkit/Main.java
+@@ -0,0 +1,7 @@
++package org.lukkitmc.lukkit;
++
++public class Main {
++    public static void main(String[] args) {
++        LukkitBootstrap.boot();
++    }
++}
